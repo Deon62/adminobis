@@ -9,6 +9,7 @@ import {
   Menu,
   Moon,
   Radio,
+  ScrollText,
   Sun,
   Users,
   X,
@@ -28,6 +29,7 @@ const items: Array<{ to: string; label: string; icon: LucideIcon }> = [
   { to: '/payment-methods', label: 'Payment methods', icon: CreditCard },
   { to: '/trades', label: 'Trades', icon: CandlestickChart },
   { to: '/markets', label: 'Markets', icon: Radio },
+  { to: '/logs', label: 'Logs', icon: ScrollText },
   { to: '/activity', label: 'Activity', icon: History },
 ]
 

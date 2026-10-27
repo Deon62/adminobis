@@ -71,4 +71,5 @@ pay out or refund withdrawals.
 | Payment methods | Methods to verify, with the details they were saved with; Verify and Block |
 | Trades | Real and demo contracts, open and settled, with entry, exit and P/L |
 | Markets | The price feed per market, providers set on the API, and the money settings |
+| Logs | Whether M-Pesa prompts, card checkouts, payment results, provider callbacks, sign-ups, Google sign-in, new accounts, emails, SMS and the price feeds are working, with each event and why it failed (needs the backend's `sql/010_events.sql`) |
 | Activity | Every change made from this site |

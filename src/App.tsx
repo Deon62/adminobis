@@ -6,6 +6,7 @@ import { adminGet, API_URL, loadToken, saveToken } from './lib/api'
 import { useTheme } from './lib/theme'
 import Activity from './pages/Activity'
 import Deposits from './pages/Deposits'
+import Logs from './pages/Logs'
 import Markets from './pages/Markets'
 import Methods from './pages/Methods'
 import Overview from './pages/Overview'
@@ -139,6 +140,7 @@ export default function App() {
           <Route path="payment-methods" element={<Methods />} />
           <Route path="trades" element={<Trades />} />
           <Route path="markets" element={<Markets />} />
+          <Route path="logs" element={<Logs />} />
           <Route path="activity" element={<Activity />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
