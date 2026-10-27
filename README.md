@@ -4,9 +4,8 @@ The admin site for obisflow: withdrawals to pay, deposits, users, payment
 methods to verify, trades, the live price feed, and a log of every change made
 here. Light and dark themes.
 
-It is a standalone Vite + React app with its own `package.json` and lockfile.
-It lives in the website repo under `admin/`, and deploys as its own Vercel
-project. The main site never ships it (see the root `.vercelignore`).
+It is a standalone Vite + React app in its own repository, deployed to Vercel.
+The API it talks to is the obisflow backend on Render.
 
 ## How it signs in
 
@@ -47,13 +46,12 @@ ADMIN_TOKEN=<32+ characters> ADMIN_URL=http://localhost:5176 uvicorn app.main:ap
 
 ## Deploy (Vercel)
 
-1. In Vercel, add a new project from the website repo and set **Root
-   Directory** to `admin`. `vercel.json` sets the build, the SPA fallback, and
-   `noindex` / no-framing headers.
+1. Import this repository in Vercel. `vercel.json` sets the build, the SPA
+   fallback, and `noindex` / no-framing headers.
 2. Set `VITE_API_URL` to the API (`https://backend-xv27.onrender.com`).
 3. Give it a domain, e.g. `admin.obisflow.com`.
 4. On Render, for the API:
-   - run `backend/sql/009_admin.sql` in Supabase first
+   - run the backend's `sql/009_admin.sql` in Supabase first
    - set `ADMIN_TOKEN` to a long random value:
      `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"`
    - set `ADMIN_URL` to this site's address, e.g. `https://admin.obisflow.com`;
