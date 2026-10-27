@@ -34,13 +34,34 @@ function SignIn({ onSignedIn, error: initialError }: { onSignedIn: (token: strin
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-5 py-16">
+    <main className="grid min-h-svh lg:grid-cols-2">
+      {/* the dark half, like the main site's sign-in: the mark, one line, the skyline */}
+      <aside className="relative hidden overflow-hidden bg-ink p-10 text-paper lg:flex lg:flex-col lg:justify-between">
+        <Wordmark dark />
+        <div className="relative z-10 max-w-md">
+          <p className="text-[2rem] font-semibold leading-tight tracking-[-0.02em]">
+            Withdrawals, deposits, users and the price feed, in one place.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-paper/60">
+            Every change made here is logged with who it was for and where it came from.
+          </p>
+        </div>
+        <p className="relative z-10 text-xs text-paper/45">obisflow Markets Ltd. · Nairobi</p>
+        <img
+          src="/skyline.svg"
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 w-full opacity-10"
+        />
+      </aside>
+
+      <div className="flex items-center justify-center px-5 py-16">
       <form onSubmit={submit} className="w-full max-w-sm">
-        <div className="flex justify-center">
+        <div className="flex justify-center lg:hidden">
           <Wordmark />
         </div>
-        <h1 className="mt-8 text-center text-2xl font-semibold tracking-[-0.02em]">Sign in</h1>
-        <p className="mt-2 text-center text-sm text-muted">Use the admin token set on the API.</p>
+        <h1 className="mt-8 text-center text-2xl font-semibold tracking-[-0.02em] lg:mt-0 lg:text-left">Sign in</h1>
+        <p className="mt-2 text-center text-sm text-muted lg:text-left">Use the admin token set on the API.</p>
         <label htmlFor="token" className="mt-8 block text-sm font-medium">
           Admin token
         </label>
@@ -61,12 +82,13 @@ function SignIn({ onSignedIn, error: initialError }: { onSignedIn: (token: strin
         >
           {busy ? 'Checking' : 'Sign in'}
         </button>
-        <p className="mt-6 text-center text-xs leading-relaxed text-muted">
+        <p className="mt-6 text-center text-xs leading-relaxed text-muted lg:text-left">
           Kept for this tab only.
           <br />
           {API_URL}
         </p>
       </form>
+      </div>
     </main>
   )
 }
