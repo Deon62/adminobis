@@ -38,12 +38,10 @@ const GROUPS: Array<{ title: string; kinds: Array<[string, string]> }> = [
     ],
   },
   {
-    title: 'Messages and prices',
+    title: 'Messages',
     kinds: [
       ['notify.email', 'Emails'],
       ['notify.sms', 'SMS'],
-      ['feed.binance', 'Price feed: Binance'],
-      ['feed.finnhub', 'Price feed: Finnhub'],
     ],
   },
 ]
