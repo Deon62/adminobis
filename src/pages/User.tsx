@@ -167,7 +167,7 @@ export default function User() {
           text={
             <>
               <b className="text-text">{data.email}</b> becomes a demonstration account. You can then credit its real balance, and it can no longer
-              deposit or withdraw.
+              deposit or withdraw. Any unfinished deposit is removed; a withdrawal in review stays for you to pay or reject.
             </>
           }
           label="Note, for the audit log"

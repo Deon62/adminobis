@@ -16,6 +16,7 @@ const GROUPS: Array<{ title: string; kinds: Array<[string, string]> }> = [
       ['mpesa.payment', 'M-Pesa payments'],
       ['card.checkout', 'Card checkout'],
       ['card.payment', 'Card payments'],
+      ['deposit.expired', 'Unfinished deposits removed'],
       ['usdt.payment', 'USDT deposits'],
       ['withdrawal.request', 'Withdrawal requests'],
     ],
