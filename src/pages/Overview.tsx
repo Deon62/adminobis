@@ -6,6 +6,7 @@ import type { Tx } from '../lib/types'
 
 type Overview = {
   users: number
+  vipUsers: number
   newUsers24h: number
   realBalances: number
   deposits24h: number
@@ -56,7 +57,7 @@ export default function Overview() {
           tone={data ? (data.houseResult24h >= 0 ? 'good' : 'bad') : undefined}
           to="/trades"
         />
-        <Stat label="Real balances" value={data ? usd(data.realBalances) : '-'} note="What users could withdraw" />
+        <Stat label="Real balances" value={data ? usd(data.realBalances) : '-'} note={data?.vipUsers ? `What users could withdraw. ${count(data.vipUsers)} VIP accounts left out` : 'What users could withdraw'} />
         <Stat label="Users" value={data ? count(data.users) : '-'} note={data && `${count(data.newUsers24h)} new in 24 h`} to="/users" />
         <Stat
           label="Open real contracts"

@@ -1,14 +1,15 @@
 import { Search, Users as UsersIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { cell, EmptyState, Loading, Notice, num, PageHeader, Panel, Table, useAdminData } from '../components/ui'
+import { cell, EmptyState, Filter, Loading, Notice, num, PageHeader, Panel, Table, useAdminData, VipTag } from '../components/ui'
 import { usd, when } from '../lib/format'
 
-type Row = { id: string; email: string; name: string; phone: string; country: string | null; createdAt: string; real: number; demo: number }
+type Row = { id: string; email: string; name: string; phone: string; country: string | null; createdAt: string; real: number; demo: number; vip: boolean }
 
 export default function Users() {
   const [query, setQuery] = useState('')
   const [q, setQ] = useState('')
+  const [who, setWho] = useState<'all' | 'vip'>('all')
   const navigate = useNavigate()
 
   // search as you type, once typing pauses
@@ -17,11 +18,20 @@ export default function Users() {
     return () => clearTimeout(id)
   }, [query])
 
-  const { data, error, loading } = useAdminData<Row[]>(`/users?limit=200&q=${encodeURIComponent(q)}`)
+  const { data, error, loading } = useAdminData<Row[]>(`/users?limit=200&vip=${who === 'vip'}&q=${encodeURIComponent(q)}`)
 
   return (
     <>
-      <PageHeader title="Users" note="Newest first. Search by email, name, phone or referral code." />
+      <PageHeader title="Users" note="Newest first. Search by email, name, phone or referral code.">
+        <Filter<'all' | 'vip'>
+          value={who}
+          onChange={setWho}
+          options={[
+            ['all', 'All'],
+            ['vip', 'VIP'],
+          ]}
+        />
+      </PageHeader>
       <label className="flex h-11 items-center gap-2 border border-line bg-surface px-3 focus-within:border-text">
         <Search size={16} className="text-muted" aria-hidden="true" />
         <input
@@ -37,12 +47,15 @@ export default function Users() {
         {loading && !data ? (
           <Loading />
         ) : !data?.length ? (
-          <EmptyState icon={UsersIcon} title={q ? 'Nobody matches' : 'No users yet'} />
+          <EmptyState icon={UsersIcon} title={q ? 'Nobody matches' : who === 'vip' ? 'No VIP accounts yet' : 'No users yet'} />
         ) : (
           <Table minWidth="52rem" columns={['Name', 'Email', 'Phone', { label: 'Real', right: true }, { label: 'Demo', right: true }, 'Joined']}>
             {data.map((u) => (
               <tr key={u.id} onClick={() => navigate(`/users/${u.id}`)} className="cursor-pointer transition-colors hover:bg-hover">
-                <td className={`${cell} font-medium`}>{u.name || <span className="text-muted">-</span>}</td>
+                <td className={`${cell} font-medium`}>
+                  {u.name || <span className="text-muted">-</span>}
+                  {u.vip && <VipTag />}
+                </td>
                 <td className={cell}>{u.email}</td>
                 <td className={`${cell} font-mono text-xs`}>{u.phone || '-'}</td>
                 <td className={num}>{usd(u.real)}</td>

@@ -1,6 +1,6 @@
 export type Tx = {
   reference: string
-  type: 'deposit' | 'withdrawal' | 'referral'
+  type: 'deposit' | 'withdrawal' | 'referral' | 'credit' | 'debit'
   method: string
   status: string
   amount: number
@@ -32,6 +32,7 @@ export type Trade = {
   settledAt: string | null
   email?: string
   userId?: string
+  vip?: boolean
 }
 
-export const METHOD: Record<string, string> = { mpesa: 'M-Pesa', card: 'Card', bank: 'Bank', usdt: 'USDT', referral: 'Referral' }
+export const METHOD: Record<string, string> = { mpesa: 'M-Pesa', card: 'Card', bank: 'Bank', usdt: 'USDT', referral: 'Referral', admin: 'obisflow' }

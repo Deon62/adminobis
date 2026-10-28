@@ -217,6 +217,11 @@ export function UserLink({ id, email }: { id?: string; email?: string }) {
   )
 }
 
+/** Marks a VIP: a demonstration account whose real balance is credited from here. */
+export function VipTag() {
+  return <span className="ml-2 border border-warn/60 px-1.5 py-px font-mono text-[10px] uppercase tracking-wider text-warn">VIP</span>
+}
+
 export function Button({ children, tone = 'plain', ...rest }: { tone?: 'plain' | 'primary' | 'danger' } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
@@ -237,7 +242,8 @@ export function Button({ children, tone = 'plain', ...rest }: { tone?: 'plain' |
 
 /**
  * A small dialog that asks for one line of text before a change goes through,
- * e.g. the receipt a withdrawal was paid with, or why it was rejected.
+ * e.g. the receipt a withdrawal was paid with, or why it was rejected. With
+ * `amount` it asks for a dollar amount instead.
  */
 export function AskDialog({
   title,
@@ -247,6 +253,7 @@ export function AskDialog({
   confirm,
   tone = 'primary',
   optional,
+  amount,
   onSubmit,
   onClose,
 }: {
@@ -257,12 +264,14 @@ export function AskDialog({
   confirm: string
   tone?: 'primary' | 'danger'
   optional?: boolean
+  amount?: boolean
   onSubmit: (value: string) => Promise<void>
   onClose: () => void
 }) {
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const ready = amount ? Number(value) >= 0.01 : optional || value.trim().length >= 3
 
   useEffect(() => {
     const key = (event: KeyboardEvent) => event.key === 'Escape' && !busy && onClose()
@@ -308,7 +317,8 @@ export function AskDialog({
               onChange={(event) => setValue(event.target.value)}
               placeholder={placeholder}
               required={!optional}
-              minLength={optional ? undefined : 3}
+              minLength={optional || amount ? undefined : 3}
+              {...(amount ? { type: 'number', inputMode: 'decimal' as const, min: 0.01, step: 0.01 } : {})}
               className="mt-2 h-10 w-full border border-line bg-bg px-3 text-sm outline-none transition-colors focus:border-text"
             />
           </label>
@@ -318,7 +328,7 @@ export function AskDialog({
           <Button onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit" tone={tone} disabled={busy || (!optional && value.trim().length < 3)}>
+          <Button type="submit" tone={tone} disabled={busy || !ready}>
             {busy ? 'Saving' : confirm}
           </Button>
         </footer>

@@ -1,7 +1,7 @@
 import { CandlestickChart } from 'lucide-react'
 import { signedUsd, usd, when } from '../lib/format'
 import type { Trade } from '../lib/types'
-import { cell, EmptyState, num, Ref, Status, Table, UserLink } from './ui'
+import { cell, EmptyState, num, Ref, Status, Table, UserLink, VipTag } from './ui'
 
 export function TradeTable({ rows, showUser = true }: { rows: Trade[]; showUser?: boolean }) {
   if (rows.length === 0) return <EmptyState icon={CandlestickChart} title="No trades" />
@@ -29,6 +29,7 @@ export function TradeTable({ rows, showUser = true }: { rows: Trade[]; showUser?
           {showUser && (
             <td className={cell}>
               <UserLink id={t.userId} email={t.email} />
+              {t.vip && <VipTag />}
             </td>
           )}
           <td className={`${cell} ${t.account === 'real' ? '' : 'text-muted'}`}>{t.account}</td>
