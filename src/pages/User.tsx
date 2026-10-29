@@ -208,7 +208,7 @@ export default function User() {
           text={
             <>
               The real balance is <b className="text-text">{usd(data.balances.real)}</b> now. The change shows in the user's history as a VIP{' '}
-              {asking}.
+              {asking}, and they get a text from obisflow at {data.phone || 'their phone number (none saved)'}.
             </>
           }
           label="Amount in USD"
