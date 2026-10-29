@@ -34,7 +34,7 @@ export function TradeTable({ rows, showUser = true }: { rows: Trade[]; showUser?
           )}
           <td className={`${cell} ${t.account === 'real' ? '' : 'text-muted'}`}>{t.account}</td>
           <td className={cell}>
-            {t.symbol} <span className="text-muted">{t.direction}</span>
+            {t.symbol} <span className="text-muted">{t.direction === 'Rise' ? 'Buy' : 'Sell'}</span>
           </td>
           <td className={num}>{usd(t.stake)}</td>
           <td className={num}>{t.entry ?? '-'}</td>
