@@ -2,6 +2,7 @@ import { ArrowLeft, Receipt } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { TradeTable } from '../components/TradeTable'
+import { WalletPanel } from '../components/WalletPanel'
 import { AskDialog, Button, cell, EmptyState, Loading, Notice, num, Panel, Ref, Stat, Status, Table, useAdminData, useAdminPost, VipTag } from '../components/ui'
 import { local, signedUsd, usd, when } from '../lib/format'
 import { METHOD, type Trade, type Tx } from '../lib/types'
@@ -100,10 +101,12 @@ export default function User() {
           >
             <p className="text-sm text-muted">
               {data.vip
-                ? `A VIP since ${when(data.vipSince)}. The real balance is money credited from here, for demonstrations: this account cannot deposit or withdraw, its trades earn no referral commission, and the overview leaves it out.`
-                : 'A VIP is a demonstration account: you credit its real balance from here, and it trades with that. It cannot deposit or withdraw. Only accounts with nothing in the real balance can be made VIP.'}
+                ? `A VIP since ${when(data.vipSince)}. A demonstration account: it deposits and withdraws by M-Pesa through the demo wallet below (the M-Pesa clone app), and you can also credit or debit its real balance here. Its trades earn no referral commission, and the overview leaves it out.`
+                : 'A VIP is a demonstration account: its M-Pesa deposits and withdrawals go through a demo wallet that the M-Pesa clone app shows, set up here, and you can credit its real balance directly. Only accounts with nothing in the real balance can be made VIP.'}
             </p>
           </Panel>
+
+          {data.vip && <WalletPanel userId={data.id} onChange={() => void reload()} />}
 
           <Panel title="Money" flush>
             {data.transactions.length === 0 ? (
@@ -166,8 +169,9 @@ export default function User() {
           title="Make VIP"
           text={
             <>
-              <b className="text-text">{data.email}</b> becomes a demonstration account. You can then credit its real balance, and it can no longer
-              deposit or withdraw. Any unfinished deposit is removed; a withdrawal in review stays for you to pay or reject.
+              <b className="text-text">{data.email}</b> becomes a demonstration account. Its M-Pesa deposits and withdrawals then go through a demo
+              wallet you set up next (a PIN for the M-Pesa clone app), and you can credit its real balance. Cards and USDT are closed to it. Any
+              unfinished deposit is removed; a withdrawal in review stays for you to pay or reject.
             </>
           }
           label="Note, for the audit log"

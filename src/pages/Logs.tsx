@@ -19,6 +19,7 @@ const GROUPS: Array<{ title: string; kinds: Array<[string, string]> }> = [
       ['deposit.expired', 'Unfinished deposits removed'],
       ['usdt.payment', 'USDT deposits'],
       ['withdrawal.request', 'Withdrawal requests'],
+      ['mpesa_demo.link', 'VIP handset links (M-Pesa app)'],
     ],
   },
   {
