@@ -33,6 +33,7 @@ export type Trade = {
   email?: string
   userId?: string
   vip?: boolean
+  staged?: boolean
 }
 
 export const METHOD: Record<string, string> = { mpesa: 'M-Pesa', card: 'Card', bank: 'Bank', usdt: 'USDT', referral: 'Referral', admin: 'obisflow' }

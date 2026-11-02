@@ -25,6 +25,7 @@ export function TradeTable({ rows, showUser = true }: { rows: Trade[]; showUser?
         <tr key={t.ref}>
           <td className={cell}>
             <Ref value={t.ref} />
+            {t.staged && <span className="ml-2 bg-warn px-1.5 py-px font-mono text-[10px] font-semibold uppercase tracking-wider text-white" title="Settled by staged results, not the price">Staged</span>}
           </td>
           {showUser && (
             <td className={cell}>

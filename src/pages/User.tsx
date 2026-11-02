@@ -19,6 +19,7 @@ type Detail = {
   createdAt: string
   vip: boolean
   vipSince: string | null
+  staged: boolean
   balances: { real?: number; demo?: number }
   deposited: number
   withdrawn: number
@@ -90,6 +91,12 @@ export default function User() {
                     Credit
                   </Button>
                   <Button onClick={() => setAsking('debit')}>Debit</Button>
+                  <Button
+                    tone={data.staged ? 'danger' : 'plain'}
+                    onClick={() => void post(`${path}/staged`, { on: !data.staged }).then(done, (e: Error) => window.alert(e.message))}
+                  >
+                    {data.staged ? 'Stop staged results' : 'Stage results'}
+                  </Button>
                   <Button tone="danger" onClick={() => setAsking('remove')}>
                     Remove VIP
                   </Button>
@@ -104,6 +111,13 @@ export default function User() {
                 ? `A VIP since ${when(data.vipSince)}. A demonstration account: it deposits and withdraws by M-Pesa through the demo wallet below (the M-Pesa clone app), and you can also credit or debit its real balance here. Its trades earn no referral commission, and the overview leaves it out.`
                 : 'A VIP is a demonstration account: its M-Pesa deposits and withdrawals go through a demo wallet that the M-Pesa clone app shows, set up here, and you can credit its real balance directly. Only accounts with nothing in the real balance can be made VIP.'}
             </p>
+            {data.vip && (
+              <p className={`mt-3 text-sm ${data.staged ? 'text-warn' : 'text-muted'}`}>
+                {data.staged
+                  ? 'Staged results are ON: this account wins most contracts whatever the price does. Its screens show a DEMO tag, and each contract settled this way is marked Staged.'
+                  : 'Stage results makes this account win most contracts, for presentations. While it is on, the account shows a DEMO tag and its contracts are marked Staged.'}
+              </p>
+            )}
           </Panel>
 
           {data.vip && <WalletPanel userId={data.id} onChange={() => void reload()} />}
