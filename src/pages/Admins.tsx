@@ -16,7 +16,7 @@ const ROLES: Array<[Role, string]> = [
 
 const box = 'mt-2 h-10 w-full border border-line bg-bg px-3 text-sm outline-none focus:border-text'
 
-function NewAdmin({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+function NewAdmin({ onClose, onDone }: { onClose: () => void; onDone: (emailed: boolean, email: string) => void }) {
   const post = useAdminPost()
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
@@ -30,8 +30,8 @@ function NewAdmin({ onClose, onDone }: { onClose: () => void; onDone: () => void
     setBusy(true)
     setError(null)
     try {
-      await post('/admins', { email: email.trim(), name: name.trim(), role, password })
-      onDone()
+      const out = await post<{ emailed: boolean }>('/admins', { email: email.trim(), name: name.trim(), role, password })
+      onDone(out.emailed, email.trim())
     } catch (e) {
       setError((e as Error).message)
       setBusy(false)
@@ -69,7 +69,7 @@ function NewAdmin({ onClose, onDone }: { onClose: () => void; onDone: () => void
           <label className="block">
             <span className="text-sm font-medium">Starting password, 10+ characters</span>
             <input type="text" required minLength={10} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" className={`${box} font-mono`} />
-            <span className="mt-1 block text-xs text-muted">Give it to them privately. They can change it on their Account page.</span>
+            <span className="mt-1 block text-xs text-muted">We email them the sign-in link, their role and this password. They can change it on their Account page.</span>
           </label>
           {error && <p className="text-sm text-bad">{error}</p>}
         </div>
@@ -97,8 +97,12 @@ export default function Admins() {
   const change = async (a: Admin, body: Record<string, unknown>, done: string) => {
     setNote(null)
     try {
-      await post(`/admins/${a.id}`, body)
-      setNote({ ok: true, text: done })
+      const out = await post<{ emailed: boolean | null }>(`/admins/${a.id}`, body)
+      setNote(
+        out.emailed === false
+          ? { ok: false, text: `${done} The email to ${a.email} did not go, so give them the password yourself.` }
+          : { ok: true, text: out.emailed ? `${done} They were emailed the new password.` : done },
+      )
       void reload()
     } catch (e) {
       setNote({ ok: false, text: (e as Error).message })
@@ -190,9 +194,13 @@ export default function Admins() {
       {adding && (
         <NewAdmin
           onClose={() => setAdding(false)}
-          onDone={() => {
+          onDone={(emailed, to) => {
             setAdding(false)
-            setNote({ ok: true, text: 'Admin added.' })
+            setNote(
+              emailed
+                ? { ok: true, text: `Admin added, and their sign-in details were emailed to ${to}.` }
+                : { ok: false, text: `Admin added, but the email to ${to} did not go (is RESEND_API_KEY set?). Give them the password yourself.` },
+            )
             void reload()
           }}
         />
