@@ -12,6 +12,7 @@ const WHAT: Record<string, string> = {
   admin: 'Everything except managing admins.',
   finance: 'Pays and rejects withdrawals. Reads everything else.',
   support: 'Verifies IDs and payment methods. Reads everything else.',
+  marketer: 'Goes live and sees the money deposited during their own sessions. Nothing else.',
 }
 
 export default function Account() {

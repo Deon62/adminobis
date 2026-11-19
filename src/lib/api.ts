@@ -60,6 +60,6 @@ export async function adminBlob(path: string, token: string): Promise<string> {
   return URL.createObjectURL(await response.blob())
 }
 
-export type Role = 'superadmin' | 'admin' | 'finance' | 'support'
-export type Me = { id: string | null; email: string; name: string; role: Role }
-export const ROLE_LABEL: Record<Role, string> = { superadmin: 'Super admin', admin: 'Admin', finance: 'Finance', support: 'Support' }
+export type Role = 'superadmin' | 'admin' | 'finance' | 'support' | 'marketer'
+export type Me = { id: string | null; email: string; name: string; role: Role; usdKesRate?: number }
+export const ROLE_LABEL: Record<Role, string> = { superadmin: 'Super admin', admin: 'Admin', finance: 'Finance', support: 'Support', marketer: 'Marketer' }

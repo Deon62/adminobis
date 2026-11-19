@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpFromLine, Landmark, Scale, TrendingUp, UserPlus } from 'lucide-react'
+import { ArrowDownToLine, ArrowUpFromLine, Landmark, Scale, TrendingUp } from 'lucide-react'
 import { DayBars, ShareBars } from '../components/Chart'
 import { PeriodPicker, PERIODS, usePeriod } from '../components/Period'
 import { cell, EmptyState, Kpis, Loading, Notice, num, PageHeader, Panel, Stat, Table, useAdminData, UserLink } from '../components/ui'
@@ -47,27 +47,38 @@ export default function Finance() {
 
       {data && (
         <>
+          {/* one strip, each figure once: the net flow and the breakdowns sit in the notes */}
           <Kpis>
-            <Stat icon={ArrowDownToLine} label="Money in" value={ksh(data.deposits)} note={`${count(data.depositsCount)} deposits from ${count(data.depositors)} users`} to="/deposits" />
-            <Stat icon={ArrowUpFromLine} label="Money out" value={ksh(data.withdrawals)} note={`${count(data.withdrawalsCount)} withdrawals paid`} to="/withdrawals" />
-            <Stat icon={Scale} label="Net flow" value={signed(data.net)} note="In less out" tone={data.net >= 0 ? 'good' : 'bad'} />
+            <Stat
+              icon={ArrowDownToLine}
+              label="Money in"
+              value={ksh(data.deposits)}
+              note={`${count(data.depositsCount)} deposits · ${count(data.firstDeposits)} first-time · net ${signed(data.net)} after payouts`}
+              to="/deposits"
+            />
+            <Stat
+              icon={ArrowUpFromLine}
+              label="Money out"
+              value={ksh(data.withdrawals)}
+              note={data.withdrawalsWaiting ? `${count(data.withdrawalsCount)} paid · ${ksh(data.withdrawalsWaitingUsd)} still waiting` : `${count(data.withdrawalsCount)} withdrawals paid`}
+              tone={data.withdrawalsWaiting ? 'warn' : undefined}
+              to="/withdrawals"
+            />
             <Stat
               icon={TrendingUp}
               label="House result"
               value={signed(data.houseResult)}
-              note={`${count(data.trades)} contracts · ${ksh(data.volume)} staked`}
-              tone={data.houseResult >= 0 ? 'good' : 'bad'}
-              to="/trades"
+              note={`${count(data.trades)} real contracts · ${ksh(data.volume)} staked`}
+              tone={data.houseResult > 0 ? 'good' : data.houseResult < 0 ? 'bad' : undefined}
             />
-          </Kpis>
-
-          <Kpis>
-            <Stat icon={Landmark} label="Real balances, now" value={ksh(data.realBalances)} note={`Owed to ${count(data.fundedAccounts)} funded accounts`} />
-            <Stat label="Withdrawals waiting" value={ksh(data.withdrawalsWaitingUsd)} note={`${count(data.withdrawalsWaiting)} to pay, now`} tone={data.withdrawalsWaiting ? 'warn' : undefined} to="/withdrawals" />
-            <Stat label="Fees kept" value={ksh(data.withdrawalFees + data.depositFees)} note={`${ksh(data.withdrawalFees)} withdrawal · ${ksh(data.depositFees)} card`} />
-            <Stat label="Referral commission" value={ksh(data.referralPaid)} note="Paid to referrers" />
-            <Stat icon={UserPlus} label="First deposits" value={count(data.firstDeposits)} note="New paying users" />
-            <Stat label="Earned" value={signed(earned)} note="House + fees − referrals" tone={earned >= 0 ? 'good' : 'bad'} />
+            <Stat
+              icon={Scale}
+              label="Earned"
+              value={signed(earned)}
+              note={`House + ${ksh(data.withdrawalFees + data.depositFees)} fees − ${ksh(data.referralPaid)} referrals`}
+              tone={earned > 0 ? 'good' : earned < 0 ? 'bad' : undefined}
+            />
+            <Stat icon={Landmark} label="Real balances, now" value={ksh(data.realBalances)} note={`Owed to ${count(data.fundedAccounts)} funded accounts, whatever the period`} />
           </Kpis>
 
           <Panel title={`Money in and out · ${day(data.since)} to ${day(data.until)}`}>

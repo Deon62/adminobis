@@ -2,7 +2,6 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   BadgeCheck,
-  CandlestickChart,
   CreditCard,
   FlaskConical,
   History,
@@ -12,6 +11,7 @@ import {
   Moon,
   Radio,
   ScrollText,
+  Video,
   ShieldCheck,
   UserCog,
   Sun,
@@ -43,12 +43,12 @@ const groups: Array<{ title: string; items: Array<{ to: string; label: string; i
       { to: '/users', label: 'Users', icon: Users },
       { to: '/verification', label: 'Verification', icon: BadgeCheck },
       { to: '/payment-methods', label: 'Payment methods', icon: CreditCard },
+      { to: '/live', label: 'Live sessions', icon: Video },
     ],
   },
   {
     title: 'Platform',
     items: [
-      { to: '/trades', label: 'Trades', icon: CandlestickChart },
       { to: '/markets', label: 'Markets', icon: Radio },
       { to: '/logs', label: 'Logs', icon: ScrollText },
       { to: '/test-bench', label: 'Test bench', icon: FlaskConical },
@@ -75,15 +75,26 @@ export function Wordmark({ dark }: { dark?: boolean }) {
   )
 }
 
+const marketerGroups: typeof groups = [
+  {
+    title: 'Marketing',
+    items: [
+      { to: '/', label: 'My live sessions', icon: Video },
+      { to: '/account', label: 'Account', icon: UserCog },
+    ],
+  },
+]
+
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { me } = useAdmin()
+  const shown = me.role === 'marketer' ? marketerGroups : groups
   return (
     <div className="flex h-full flex-col px-4 pb-4 pt-6">
       <div className="px-3">
         <Wordmark dark />
       </div>
       <nav aria-label="Admin" className="mt-7 space-y-6">
-        {groups.map((group) => (
+        {shown.map((group) => (
           <div key={group.title}>
             <p className="type-label px-3 pb-2 text-paper/35">{group.title}</p>
             <ul className="space-y-0.5">

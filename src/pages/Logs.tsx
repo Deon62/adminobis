@@ -1,6 +1,6 @@
-import { ScrollText } from 'lucide-react'
+import { CreditCard, Database, Mail, MessageSquare, Radio, ScrollText, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { cell, EmptyState, Filter, Loading, Notice, PageHeader, Panel, Ref, Table, useAdminData, UserLink } from '../components/ui'
+import { cell, EmptyState, Filter, Kpis, Loading, Notice, PageHeader, Panel, Ref, Table, useAdminData, UserLink } from '../components/ui'
 import { cn, count, when } from '../lib/format'
 
 type Summary = { kind: string; total: number; failed: number; lastAt: string | null; lastFailedAt: string | null; lastError: string | null; avgMs: number | null }
@@ -67,23 +67,67 @@ const HEALTH: Record<Health, [string, string]> = {
 
 type Range = '24' | '168' | '720'
 
+type Service = { key: string; state: 'up' | 'warn' | 'idle' | 'down'; detail: string; ms: number }
+const SERVICE: Record<string, [string, LucideIcon]> = {
+  database: ['Database', Database],
+  payments: ['M-Pesa payments', CreditCard],
+  sms: ['SMS', MessageSquare],
+  email: ['Email (Resend)', Mail],
+  feed: ['Price feed', Radio],
+}
+const STATE: Record<Service['state'], [string, string, string]> = {
+  up: ['Up', 'text-good', 'bg-good'],
+  warn: ['Check it', 'text-warn', 'bg-warn'],
+  idle: ['Quiet', 'text-muted', 'bg-faint'],
+  down: ['Down', 'text-bad', 'bg-bad'],
+}
+
+/** The key services, up or not, in one strip. */
+function StatusStrip({ data, error }: { data: Service[] | null; error: string | null }) {
+  if (error) return <Notice>{error}</Notice>
+  return (
+    <Kpis min="12rem">
+      {(data ?? Object.keys(SERVICE).map((key) => ({ key, state: 'idle' as const, detail: 'Checking', ms: 0 }))).map((s) => {
+        const [label, Icon] = SERVICE[s.key] ?? [s.key, Radio]
+        const [word, text, dot] = STATE[s.state]
+        return (
+          <div key={s.key} className="px-5 py-4 shadow-[0_0_0_1px_var(--line)]" title={s.detail}>
+            <p className="type-label flex items-center gap-2 text-muted">
+              <Icon size={13} aria-hidden="true" />
+              {label}
+            </p>
+            <p className={cn('mt-2.5 flex items-center gap-2 text-lg font-semibold', data ? text : 'text-muted')}>
+              <span className={cn('size-2 rounded-full', data ? dot : 'bg-line', data && s.state === 'up' && 'animate-pulse')} aria-hidden="true" />
+              {data ? word : '…'}
+            </p>
+            <p className="mt-1 line-clamp-2 text-xs text-muted">{s.detail}</p>
+          </div>
+        )
+      })}
+    </Kpis>
+  )
+}
+
 export default function Logs() {
   const [range, setRange] = useState<Range>('24')
   const [kind, setKind] = useState('')
   const [failedOnly, setFailedOnly] = useState(false)
   const summary = useAdminData<Summary[]>(`/logs/summary?hours=${range}`)
+  const services = useAdminData<Service[]>('/status')
   const list = useAdminData<Event[]>(`/logs?limit=300&failed=${failedOnly}&kind=${encodeURIComponent(kind)}`)
 
   // payments and sign-ins keep happening; refresh every 15 seconds
   const { reload: reloadSummary } = summary
   const { reload: reloadList } = list
+  const { reload: reloadServices } = services
   useEffect(() => {
     const id = setInterval(() => {
       void reloadSummary()
       void reloadList()
+      void reloadServices()
     }, 15000)
     return () => clearInterval(id)
-  }, [reloadSummary, reloadList])
+  }, [reloadSummary, reloadList, reloadServices])
 
   const byKind = Object.fromEntries((summary.data ?? []).map((s) => [s.kind, s]))
 
@@ -101,6 +145,7 @@ export default function Logs() {
           ]}
         />
       </PageHeader>
+      <StatusStrip data={services.data} error={services.error} />
       {summary.error && <Notice>{summary.error}</Notice>}
 
       <div className="grid gap-4 xl:grid-cols-2">

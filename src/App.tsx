@@ -15,9 +15,9 @@ import Markets from './pages/Markets'
 import Methods from './pages/Methods'
 import Overview from './pages/Overview'
 import TestBench from './pages/TestBench'
-import Trades from './pages/Trades'
 import User from './pages/User'
 import Users from './pages/Users'
+import Live from './pages/Live'
 import Verification from './pages/Verification'
 import Withdrawals from './pages/Withdrawals'
 
@@ -166,12 +166,14 @@ export default function App() {
   // it is, then the USD to KES rate every figure is shown at.
   useEffect(() => {
     if (!token) return
-    adminGet<Me>('/me', token).then(setMe, (reason: Error & { status?: number }) => {
+    adminGet<Me>('/me', token).then((who) => {
+      setMe(who)
+      if (who.usdKesRate) setRate(who.usdKesRate)
+    }, (reason: Error & { status?: number }) => {
       setExpired(reason.message)
       saveToken(null)
       setToken(null)
     })
-    adminGet<{ usdKesRate?: number }>('/overview', token).then((o) => o.usdKesRate && setRate(o.usdKesRate), () => null)
   }, [token])
 
   if (!token) {
@@ -197,6 +199,23 @@ export default function App() {
 
   const superadmin = me.role === 'superadmin'
 
+  // a marketer gets two pages: their live sessions and their account
+  if (me.role === 'marketer') {
+    return (
+      <AdminContext.Provider value={{ token, me, signOut, setMe }}>
+        <RateContext.Provider value={rate}>
+          <Routes>
+            <Route element={<Layout theme={theme} onTheme={setTheme} />}>
+              <Route index element={<Live />} />
+              <Route path="account" element={<Account />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </RateContext.Provider>
+      </AdminContext.Provider>
+    )
+  }
+
   return (
     <AdminContext.Provider value={{ token, me, signOut, setMe }}>
       <RateContext.Provider value={rate}>
@@ -211,11 +230,11 @@ export default function App() {
             <Route path="users" element={<Users />} />
             <Route path="users/:id" element={<User />} />
             <Route path="payment-methods" element={<Methods />} />
-            <Route path="trades" element={<Trades />} />
             <Route path="markets" element={<Markets />} />
             <Route path="logs" element={<Logs />} />
             <Route path="activity" element={<Activity />} />
             <Route path="account" element={<Account />} />
+            <Route path="live" element={<Live />} />
             {superadmin && <Route path="admins" element={<Admins />} />}
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

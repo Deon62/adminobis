@@ -1,11 +1,10 @@
 import { ArrowLeft, Receipt } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { TradeTable } from '../components/TradeTable'
 import { WalletPanel } from '../components/WalletPanel'
 import { AskDialog, Button, cell, EmptyState, Facts, Kpis, Loading, Notice, num, Panel, Ref, Stat, Status, Table, useAdminData, useAdminPost, useCan, VipTag } from '../components/ui'
 import { day, useKsh, useTxKsh, usd, when } from '../lib/format'
-import { METHOD, type Trade, type Tx } from '../lib/types'
+import { METHOD, type Tx } from '../lib/types'
 
 type Detail = {
   id: string
@@ -25,7 +24,6 @@ type Detail = {
   withdrawn: number
   realPl: number
   transactions: Tx[]
-  trades: Trade[]
   verification?: {
     ready: boolean
     verified: boolean
@@ -210,9 +208,6 @@ export default function User() {
             )}
           </Panel>
 
-          <Panel title="Latest trades" flush>
-            <TradeTable rows={data.trades} showUser={false} />
-          </Panel>
         </>
       )}
 

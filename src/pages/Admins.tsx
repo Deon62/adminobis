@@ -7,6 +7,7 @@ import { cn, when } from '../lib/format'
 type Admin = { id: string; email: string; name: string; role: Role; active: boolean; createdAt: string; lastLoginAt: string | null }
 
 const ROLES: Array<[Role, string]> = [
+  ['marketer', 'Marketer: goes live, sees only the money from their sessions'],
   ['support', 'Support: verifies IDs and payment methods'],
   ['finance', 'Finance: pays and rejects withdrawals'],
   ['admin', 'Admin: everything except managing admins'],

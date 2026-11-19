@@ -17,6 +17,8 @@ const LABEL: Record<string, string> = {
   'admin.password': 'Password changed',
   'test.sms': 'Test text sent',
   'test.email': 'Test email sent',
+  'live.start': 'Live session started',
+  'live.end': 'Live session ended',
 }
 
 export default function Activity() {
