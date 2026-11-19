@@ -1,6 +1,6 @@
 import { Smartphone } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { local, when } from '../lib/format'
+import { when } from '../lib/format'
 import { Button, cell, EmptyState, Loading, Notice, num, Panel, Ref, Table, useAdminData, useAdminPost } from './ui'
 
 type Wallet = {
@@ -18,7 +18,7 @@ type Move = { id: string; kind: string; title: string; subtitle: string; amountM
 
 type WalletData = { wallet: Wallet | null; statement: Move[]; sms: { provider: string | null; sender: string | null } }
 
-const ksh = (minor: number) => local(minor / 100, 'KES')
+const ksh = (minor: number) => `KSh ${Math.round(minor / 100).toLocaleString()}`
 const field = 'mt-1.5 h-9 w-full border border-line bg-bg px-3 text-sm outline-none transition-colors focus:border-text'
 
 /**

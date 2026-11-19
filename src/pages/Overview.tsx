@@ -1,110 +1,126 @@
+import { ArrowDownToLine, ArrowUpFromLine, BadgeCheck, Landmark, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Loading, Notice, PageHeader, Panel, Stat, useAdminData } from '../components/ui'
+import { DayBars } from '../components/Chart'
+import { Kpis, Loading, Notice, PageHeader, Panel, Stat, useAdminData } from '../components/ui'
 import { WithdrawalTable } from '../components/WithdrawalTable'
-import { count, signedUsd, usd } from '../lib/format'
+import { count, useKsh } from '../lib/format'
 import type { Tx } from '../lib/types'
 
 type Overview = {
   users: number
-  vipUsers: number
   newUsers24h: number
   realBalances: number
-  deposits24h: number
-  deposits24hCount: number
-  deposits7d: number
-  depositsStuck: number
+  depositsToday: number
+  depositsTodayCount: number
   withdrawalsWaiting: number
   withdrawalsWaitingUsd: number
-  withdrawals7d: number
-  realTrades24h: number
-  realVolume24h: number
-  houseResult24h: number
-  realTraders24h: number
-  openRealContracts: number
-  openRealAtRisk: number
+  verificationsWaiting: number | null
   methodsWaiting: number
-  marketsLive: number
-  markets: number
+  depositsStuck: number
 }
 
+type Days = { days: Array<{ day: string; deposits: number; withdrawals: number }> }
+
 export default function Overview() {
+  const { ksh, short } = useKsh()
   const { data, error } = useAdminData<Overview>('/overview')
+  const finance = useAdminData<Days>('/finance')
   const waiting = useAdminData<Tx[]>('/transactions?type=withdrawal&status=waiting&limit=10')
+  const last14 = finance.data?.days.slice(-14) ?? []
 
   return (
     <>
-      <PageHeader title="Overview" note="Real money only, unless it says demo." />
+      <PageHeader title="Overview" note="Real money only. VIP demonstration accounts are left out." />
       {error && <Notice>{error}</Notice>}
+      {data && data.depositsStuck > 0 && (
+        <Notice tone="bad">
+          {count(data.depositsStuck)} deposit{data.depositsStuck === 1 ? ' is' : 's are'} stuck at pending for over 15 minutes.{' '}
+          <Link to="/deposits" className="underline underline-offset-4">
+            Check them
+          </Link>
+        </Notice>
+      )}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <Kpis>
+        <Stat icon={Landmark} label="Real balances" value={data ? ksh(data.realBalances) : '-'} note="What users could withdraw now" to="/finance" />
         <Stat
+          icon={ArrowDownToLine}
+          label="Deposits today"
+          value={data ? ksh(data.depositsToday) : '-'}
+          note={data && `${count(data.depositsTodayCount)} completed since midnight`}
+          to="/deposits"
+        />
+        <Stat
+          icon={ArrowUpFromLine}
           label="Withdrawals waiting"
-          value={data ? count(data.withdrawalsWaiting) : '-'}
-          note={data && `${usd(data.withdrawalsWaitingUsd)} to pay`}
+          value={data ? ksh(data.withdrawalsWaitingUsd) : '-'}
+          note={data && `${count(data.withdrawalsWaiting)} to pay`}
           tone={data && data.withdrawalsWaiting > 0 ? 'warn' : undefined}
           to="/withdrawals"
         />
         <Stat
-          label="Deposits, 24 h"
-          value={data ? usd(data.deposits24h) : '-'}
-          note={data && `${count(data.deposits24hCount)} deposits · ${usd(data.deposits7d)} in 7 days`}
-          to="/deposits"
+          icon={BadgeCheck}
+          label="To verify"
+          value={data ? count((data.verificationsWaiting ?? 0) + data.methodsWaiting) : '-'}
+          note={data && (data.verificationsWaiting == null ? 'Run sql/015 to turn on ID checks' : `${count(data.verificationsWaiting)} IDs · ${count(data.methodsWaiting)} payment methods`)}
+          tone={data && (data.verificationsWaiting ?? 0) + data.methodsWaiting > 0 ? 'warn' : undefined}
+          to="/verification"
         />
-        <Stat
-          label="House result, 24 h"
-          value={data ? signedUsd(data.houseResult24h) : '-'}
-          note={data && `${count(data.realTrades24h)} trades · ${usd(data.realVolume24h)} staked`}
-          tone={data ? (data.houseResult24h >= 0 ? 'good' : 'bad') : undefined}
-          to="/trades"
-        />
-        <Stat label="Real balances" value={data ? usd(data.realBalances) : '-'} note={data?.vipUsers ? `What users could withdraw. ${count(data.vipUsers)} VIP accounts left out` : 'What users could withdraw'} />
-        <Stat label="Users" value={data ? count(data.users) : '-'} note={data && `${count(data.newUsers24h)} new in 24 h`} to="/users" />
-        <Stat
-          label="Open real contracts"
-          value={data ? count(data.openRealContracts) : '-'}
-          note={data && `${usd(data.openRealAtRisk)} staked · ${count(data.realTraders24h)} traders in 24 h`}
-        />
-        <Stat
-          label="Methods to verify"
-          value={data ? count(data.methodsWaiting) : '-'}
-          note={data && (data.depositsStuck ? `${count(data.depositsStuck)} deposits stuck at pending` : 'Bank and USDT accounts')}
-          tone={data && data.methodsWaiting > 0 ? 'warn' : undefined}
-          to="/payment-methods"
-        />
-        <Stat
-          label="Markets live"
-          value={data ? `${data.marketsLive} / ${data.markets}` : '-'}
-          note="Open for real money now"
-          tone={data && data.marketsLive === 0 ? 'bad' : undefined}
-          to="/markets"
-        />
-      </div>
+        <Stat icon={Users} label="Users" value={data ? count(data.users) : '-'} note={data && `${count(data.newUsers24h)} new in 24 h`} to="/users" />
+      </Kpis>
 
-      <Panel
-        title="Withdrawals waiting"
-        flush
-        action={
-          <Link to="/withdrawals" className="text-xs text-muted underline-offset-4 hover:text-text hover:underline">
-            All withdrawals
-          </Link>
-        }
-      >
-        {waiting.loading && !waiting.data ? (
-          <Loading />
-        ) : waiting.error ? (
-          <div className="p-5">
-            <Notice>{waiting.error}</Notice>
-          </div>
-        ) : (
-          <WithdrawalTable
-            rows={waiting.data ?? []}
-            emptyText="Nothing waiting"
-            onChanged={() => {
-              void waiting.reload()
-            }}
-          />
-        )}
-      </Panel>
+      <div className="grid gap-5 2xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <Panel
+          title="Money in and out, last 14 days"
+          action={
+            <Link to="/finance" className="text-xs text-muted underline-offset-4 hover:text-text hover:underline">
+              Finance
+            </Link>
+          }
+        >
+          {finance.error ? (
+            <Notice>{finance.error}</Notice>
+          ) : !finance.data ? (
+            <Loading />
+          ) : (
+            <DayBars
+              rows={last14}
+              format={ksh}
+              short={short}
+              series={[
+                { key: 'deposits', label: 'Deposits', color: 'var(--series-in)' },
+                { key: 'withdrawals', label: 'Withdrawals paid', color: 'var(--series-out)' },
+              ]}
+            />
+          )}
+        </Panel>
+
+        <Panel
+          title="Withdrawals waiting"
+          flush
+          action={
+            <Link to="/withdrawals" className="text-xs text-muted underline-offset-4 hover:text-text hover:underline">
+              All withdrawals
+            </Link>
+          }
+        >
+          {waiting.loading && !waiting.data ? (
+            <Loading />
+          ) : waiting.error ? (
+            <div className="p-5">
+              <Notice>{waiting.error}</Notice>
+            </div>
+          ) : (
+            <WithdrawalTable
+              rows={waiting.data ?? []}
+              emptyText="Nothing waiting"
+              onChanged={() => {
+                void waiting.reload()
+              }}
+            />
+          )}
+        </Panel>
+      </div>
     </>
   )
 }

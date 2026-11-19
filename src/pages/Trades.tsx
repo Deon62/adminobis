@@ -16,6 +16,7 @@ export default function Trades() {
       <PageHeader title="Trades" note="Newest first. P/L is the user's: a positive figure is paid out by the house.">
         <div className="flex flex-wrap gap-2">
           <Filter<Show>
+            label="Status"
             value={show}
             onChange={setShow}
             options={[
@@ -25,6 +26,7 @@ export default function Trades() {
             ]}
           />
           <Filter<Account>
+            label="Account"
             value={account}
             onChange={setAccount}
             options={[

@@ -15,6 +15,7 @@ export type Tx = {
   completedAt: string | null
   email?: string
   userId?: string
+  vip?: boolean
 }
 
 export type Trade = {
@@ -37,3 +38,6 @@ export type Trade = {
 }
 
 export const METHOD: Record<string, string> = { mpesa: 'M-Pesa', card: 'Card', bank: 'Bank', usdt: 'USDT', referral: 'Referral', admin: 'obisflow' }
+
+export type Bucket = { count: number; amount: number; net: number; fee: number; kes: number; users: number }
+export type Totals = { byStatus: Partial<Record<'completed' | 'pending' | 'waiting' | 'failed', Bucket>>; count: number }

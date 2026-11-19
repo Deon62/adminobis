@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { cell, Loading, Notice, num, PageHeader, Panel, Table, useAdminData } from '../components/ui'
-import { cn, usd } from '../lib/format'
+import { cn, useKsh } from '../lib/format'
 
 type System = {
   frontendUrl: string
@@ -15,6 +15,7 @@ type System = {
 
 export default function Markets() {
   const { data, error, loading, reload } = useAdminData<System>('/system')
+  const { ksh } = useKsh()
 
   // the feed moves every second; refresh the table every five
   useEffect(() => {
@@ -64,9 +65,9 @@ export default function Markets() {
             <Panel title="Settings">
               <ul className="divide-y divide-line text-sm">
                 {[
-                  ['Minimum deposit', usd(data.minDepositUsd)],
-                  ['Minimum withdrawal', usd(data.minWithdrawUsd)],
-                  ['Withdrawal fee', usd(data.withdrawFeeUsd)],
+                  ['Minimum deposit', ksh(data.minDepositUsd)],
+                  ['Minimum withdrawal', ksh(data.minWithdrawUsd)],
+                  ['Withdrawal fee', ksh(data.withdrawFeeUsd)],
                   ['M-Pesa rate', `KSh ${data.usdKesRate} to $1`],
                   ['Website', data.frontendUrl],
                   ['Admin site', data.adminUrl || '-'],

@@ -38,17 +38,28 @@ async function request<T>(method: 'GET' | 'POST', path: string, token: string, b
   try {
     response = await fetch(`${API_URL}/admin${path}`, {
       method,
-      headers: { authorization: `Bearer ${token}`, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
     throw new AdminError(`Can't reach the API at ${API_URL}. It may be waking up, or ADMIN_URL on the API is not this site's address.`, 0)
   }
   const data = (await response.json().catch(() => ({}))) as T & { detail?: string }
-  if (response.status === 404 && path === '/overview') throw new AdminError('The admin API is off. Set ADMIN_TOKEN on the API server.', 404)
+  if (response.status === 404 && (path === '/me' || path.startsWith('/auth/'))) throw new AdminError('The admin API is off. Set ADMIN_TOKEN on the API server.', 404)
   if (!response.ok) throw new AdminError(typeof data.detail === 'string' ? data.detail : `API error ${response.status}`, response.status)
   return data
 }
 
 export const adminGet = <T>(path: string, token: string) => request<T>('GET', path, token)
 export const adminPost = <T>(path: string, token: string, body: unknown = {}) => request<T>('POST', path, token, body)
+
+/** A file from the admin API (e.g. an ID photo), as a blob URL shown from memory. Revoke it when done. */
+export async function adminBlob(path: string, token: string): Promise<string> {
+  const response = await fetch(`${API_URL}/admin${path}`, { headers: { authorization: `Bearer ${token}` } })
+  if (!response.ok) throw new AdminError(`Could not load the file (${response.status})`, response.status)
+  return URL.createObjectURL(await response.blob())
+}
+
+export type Role = 'superadmin' | 'admin' | 'finance' | 'support'
+export type Me = { id: string | null; email: string; name: string; role: Role }
+export const ROLE_LABEL: Record<Role, string> = { superadmin: 'Super admin', admin: 'Admin', finance: 'Finance', support: 'Support' }

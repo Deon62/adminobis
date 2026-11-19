@@ -2,7 +2,7 @@ import { Search, Users as UsersIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cell, EmptyState, Filter, Loading, Notice, num, PageHeader, Panel, Table, useAdminData, VipTag } from '../components/ui'
-import { usd, when } from '../lib/format'
+import { useKsh, when } from '../lib/format'
 
 type Row = { id: string; email: string; name: string; phone: string; country: string | null; createdAt: string; real: number; demo: number; vip: boolean }
 
@@ -11,6 +11,7 @@ export default function Users() {
   const [q, setQ] = useState('')
   const [who, setWho] = useState<'all' | 'vip'>('all')
   const navigate = useNavigate()
+  const { ksh } = useKsh()
 
   // search as you type, once typing pauses
   useEffect(() => {
@@ -24,11 +25,12 @@ export default function Users() {
     <>
       <PageHeader title="Users" note="Newest first. Search by email, name, phone or referral code.">
         <Filter<'all' | 'vip'>
+          label="Show"
           value={who}
           onChange={setWho}
           options={[
-            ['all', 'All'],
-            ['vip', 'VIP'],
+            ['all', 'All users'],
+            ['vip', 'VIP only'],
           ]}
         />
       </PageHeader>
@@ -58,8 +60,8 @@ export default function Users() {
                 </td>
                 <td className={cell}>{u.email}</td>
                 <td className={`${cell} font-mono text-xs`}>{u.phone || '-'}</td>
-                <td className={num}>{usd(u.real)}</td>
-                <td className={`${num} text-muted`}>{usd(u.demo)}</td>
+                <td className={num}>{ksh(u.real)}</td>
+                <td className={`${num} text-muted`}>{ksh(u.demo)}</td>
                 <td className={`${cell} whitespace-nowrap text-muted`}>{when(u.createdAt)}</td>
               </tr>
             ))}

@@ -1,9 +1,10 @@
 import { CandlestickChart } from 'lucide-react'
-import { signedUsd, usd, when } from '../lib/format'
+import { useKsh, when } from '../lib/format'
 import type { Trade } from '../lib/types'
 import { cell, EmptyState, num, Ref, Status, Table, UserLink, VipTag } from './ui'
 
 export function TradeTable({ rows, showUser = true }: { rows: Trade[]; showUser?: boolean }) {
+  const { ksh, signed } = useKsh()
   if (rows.length === 0) return <EmptyState icon={CandlestickChart} title="No trades" />
   return (
     <Table
@@ -37,13 +38,13 @@ export function TradeTable({ rows, showUser = true }: { rows: Trade[]; showUser?
           <td className={cell}>
             {t.symbol} <span className="text-muted">{t.direction === 'Rise' ? 'Buy' : 'Sell'}</span>
           </td>
-          <td className={num}>{usd(t.stake)}</td>
+          <td className={num}>{ksh(t.stake)}</td>
           <td className={num}>{t.entry ?? '-'}</td>
           <td className={num}>{t.exit ?? '-'}</td>
           <td className={cell}>
             <Status value={t.status} />
           </td>
-          <td className={`${num} ${t.profit == null ? '' : t.profit > 0 ? 'text-good' : t.profit < 0 ? 'text-bad' : ''}`}>{signedUsd(t.profit)}</td>
+          <td className={`${num} ${t.profit == null ? '' : t.profit > 0 ? 'text-good' : t.profit < 0 ? 'text-bad' : ''}`}>{signed(t.profit)}</td>
           <td className={`${cell} whitespace-nowrap text-muted`}>{when(t.openedAt)}</td>
         </tr>
       ))}

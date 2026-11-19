@@ -1,8 +1,10 @@
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  BadgeCheck,
   CandlestickChart,
   CreditCard,
+  FlaskConical,
   History,
   LayoutDashboard,
   LogOut,
@@ -10,8 +12,11 @@ import {
   Moon,
   Radio,
   ScrollText,
+  ShieldCheck,
+  UserCog,
   Sun,
   Users,
+  Wallet,
   X,
   type LucideIcon,
 } from 'lucide-react'
@@ -19,18 +24,44 @@ import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { cn } from '../lib/format'
 import type { Theme } from '../lib/theme'
+import { ROLE_LABEL } from '../lib/api'
 import { useAdmin } from './ui'
 
-const items: Array<{ to: string; label: string; icon: LucideIcon }> = [
-  { to: '/', label: 'Overview', icon: LayoutDashboard },
-  { to: '/withdrawals', label: 'Withdrawals', icon: ArrowUpFromLine },
-  { to: '/deposits', label: 'Deposits', icon: ArrowDownToLine },
-  { to: '/users', label: 'Users', icon: Users },
-  { to: '/payment-methods', label: 'Payment methods', icon: CreditCard },
-  { to: '/trades', label: 'Trades', icon: CandlestickChart },
-  { to: '/markets', label: 'Markets', icon: Radio },
-  { to: '/logs', label: 'Logs', icon: ScrollText },
-  { to: '/activity', label: 'Activity', icon: History },
+const groups: Array<{ title: string; items: Array<{ to: string; label: string; icon: LucideIcon }> }> = [
+  {
+    title: 'Money',
+    items: [
+      { to: '/', label: 'Overview', icon: LayoutDashboard },
+      { to: '/finance', label: 'Finance', icon: Wallet },
+      { to: '/deposits', label: 'Deposits', icon: ArrowDownToLine },
+      { to: '/withdrawals', label: 'Withdrawals', icon: ArrowUpFromLine },
+    ],
+  },
+  {
+    title: 'People',
+    items: [
+      { to: '/users', label: 'Users', icon: Users },
+      { to: '/verification', label: 'Verification', icon: BadgeCheck },
+      { to: '/payment-methods', label: 'Payment methods', icon: CreditCard },
+    ],
+  },
+  {
+    title: 'Platform',
+    items: [
+      { to: '/trades', label: 'Trades', icon: CandlestickChart },
+      { to: '/markets', label: 'Markets', icon: Radio },
+      { to: '/logs', label: 'Logs', icon: ScrollText },
+      { to: '/test-bench', label: 'Test bench', icon: FlaskConical },
+      { to: '/activity', label: 'Activity', icon: History },
+    ],
+  },
+  {
+    title: 'You',
+    items: [
+      { to: '/account', label: 'Account', icon: UserCog },
+      { to: '/admins', label: 'Admins', icon: ShieldCheck },
+    ],
+  },
 ]
 
 export function Wordmark({ dark }: { dark?: boolean }) {
@@ -45,32 +76,38 @@ export function Wordmark({ dark }: { dark?: boolean }) {
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { me } = useAdmin()
   return (
     <div className="flex h-full flex-col px-4 pb-4 pt-6">
       <div className="px-3">
         <Wordmark dark />
       </div>
-      <nav aria-label="Admin" className="mt-8">
-        <ul className="space-y-0.5">
-          {items.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                onClick={onNavigate}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2.5 text-sm transition-colors',
-                    isActive ? 'bg-paper/10 text-paper' : 'text-paper/65 hover:bg-paper/5 hover:text-paper',
-                  )
-                }
-              >
-                <item.icon size={18} aria-hidden="true" />
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+      <nav aria-label="Admin" className="mt-7 space-y-6">
+        {groups.map((group) => (
+          <div key={group.title}>
+            <p className="type-label px-3 pb-2 text-paper/35">{group.title}</p>
+            <ul className="space-y-0.5">
+              {group.items.filter((item) => item.to !== '/admins' || me.role === 'superadmin').map((item) => (
+                <li key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.to === '/'}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 border-l-2 px-3 py-2 text-sm transition-colors',
+                        isActive ? 'border-[#00BF63] bg-paper/10 text-paper' : 'border-transparent text-paper/65 hover:bg-paper/5 hover:text-paper',
+                      )
+                    }
+                  >
+                    <item.icon size={17} aria-hidden="true" />
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
       <p className="mt-auto px-3 pt-6 text-xs leading-relaxed text-paper/45">Every change here is logged under Activity.</p>
     </div>
@@ -78,7 +115,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function Layout({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) => void }) {
-  const { signOut } = useAdmin()
+  const { signOut, me } = useAdmin()
   const [menuOpen, setMenuOpen] = useState(false)
   const next = theme === 'dark' ? 'light' : 'dark'
 
@@ -106,6 +143,15 @@ export function Layout({ theme, onTheme }: { theme: Theme; onTheme: (theme: Them
       )}
 
       <div className="sticky top-14 z-20 flex h-14 items-center justify-end gap-2 border-b border-line bg-bg/90 px-4 backdrop-blur-md lg:top-0">
+        <NavLink to="/account" className="mr-auto flex min-w-0 items-center gap-2 text-sm lg:mr-2">
+          <span className="flex size-8 shrink-0 items-center justify-center bg-ink font-brand text-xs font-bold uppercase text-paper">
+            {(me.name || me.email).slice(0, 1)}
+          </span>
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate font-medium">{me.name || me.email}</span>
+            <span className="block text-[11px] text-muted">{ROLE_LABEL[me.role]}</span>
+          </span>
+        </NavLink>
         <button
           type="button"
           onClick={() => onTheme(next)}
@@ -125,7 +171,7 @@ export function Layout({ theme, onTheme }: { theme: Theme; onTheme: (theme: Them
         </button>
       </div>
 
-      <main className="mx-auto max-w-[1400px] space-y-4 p-4 sm:p-6">
+      <main className="w-full space-y-5 p-4 sm:p-6 2xl:px-10">
         <Outlet />
       </main>
     </div>

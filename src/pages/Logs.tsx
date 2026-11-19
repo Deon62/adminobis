@@ -91,6 +91,7 @@ export default function Logs() {
     <>
       <PageHeader title="Logs" note="Whether the calls that move money and open accounts are working. Pick a row to see its events.">
         <Filter<Range>
+          label="Period"
           value={range}
           onChange={setRange}
           options={[
@@ -156,6 +157,7 @@ export default function Logs() {
               </button>
             )}
             <Filter<'all' | 'failed'>
+              label="Show"
               value={failedOnly ? 'failed' : 'all'}
               onChange={(v) => setFailedOnly(v === 'failed')}
               options={[

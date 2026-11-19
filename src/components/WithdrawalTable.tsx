@@ -1,8 +1,8 @@
 import { ArrowUpFromLine } from 'lucide-react'
 import { useState } from 'react'
-import { local, usd, when } from '../lib/format'
+import { useKsh, useTxKsh, usd, when } from '../lib/format'
 import { METHOD, type Tx } from '../lib/types'
-import { AskDialog, Button, cell, EmptyState, num, Ref, Status, Table, useAdminPost, UserLink } from './ui'
+import { AskDialog, Button, cell, EmptyState, num, Ref, Status, Table, useAdminPost, useCan, UserLink } from './ui'
 
 /**
  * Withdrawals, with Paid and Reject on the ones still waiting. Paying happens
@@ -11,6 +11,9 @@ import { AskDialog, Button, cell, EmptyState, num, Ref, Status, Table, useAdminP
  */
 export function WithdrawalTable({ rows, onChanged, emptyText }: { rows: Tx[]; onChanged: () => void; emptyText?: string }) {
   const post = useAdminPost()
+  const can = useCan()
+  const { ksh } = useKsh()
+  const txKsh = useTxKsh()
   const [asking, setAsking] = useState<{ tx: Tx; kind: 'approve' | 'reject' } | null>(null)
 
   if (rows.length === 0) return <EmptyState icon={ArrowUpFromLine} title={emptyText ?? 'No withdrawals'} />
@@ -38,19 +41,19 @@ export function WithdrawalTable({ rows, onChanged, emptyText }: { rows: Tx[]; on
                 {tx.failure && <p className="mt-1 text-xs text-bad">{tx.failure}</p>}
               </td>
               <td className={num}>
-                <b className="font-semibold">{local(tx.local, tx.localCurrency) ?? usd(tx.amount)}</b>
-                {tx.local != null && <p className="text-muted">{usd(tx.amount)}</p>}
+                <b className="font-semibold">{txKsh(tx)}</b>
+                <p className="text-muted">{usd(tx.amount)}</p>
               </td>
               <td className={num}>
-                {usd(tx.net)}
-                <p className="text-muted">fee {usd(tx.fee)}</p>
+                {ksh(tx.net)}
+                <p className="text-muted">fee {ksh(tx.fee)}</p>
               </td>
               <td className={cell}>
                 <Status value={tx.status} />
               </td>
               <td className={`${cell} whitespace-nowrap text-muted`}>{when(tx.createdAt)}</td>
               <td className={`${cell} whitespace-nowrap text-right`}>
-                {waiting && (
+                {waiting && can('finance') && (
                   <span className="inline-flex gap-2">
                     <Button tone="primary" onClick={() => setAsking({ tx, kind: 'approve' })}>
                       Mark paid
@@ -71,7 +74,7 @@ export function WithdrawalTable({ rows, onChanged, emptyText }: { rows: Tx[]; on
           title="Mark withdrawal paid"
           text={
             <>
-              Send <b className="text-text">{local(asking.tx.local, asking.tx.localCurrency) ?? usd(asking.tx.amount)}</b> by{' '}
+              Send <b className="text-text">{txKsh(asking.tx)}</b> by{' '}
               {METHOD[asking.tx.method] ?? asking.tx.method} to <b className="text-text">{asking.tx.destination}</b> first, then record the
               receipt here. The user is emailed that it was paid.
             </>
@@ -93,7 +96,7 @@ export function WithdrawalTable({ rows, onChanged, emptyText }: { rows: Tx[]; on
           tone="danger"
           text={
             <>
-              <b className="text-text">{usd(asking.tx.net)}</b> goes back to the user's real balance, and they are emailed the reason
+              <b className="text-text">{ksh(asking.tx.net)}</b> goes back to the user's real balance, and they are emailed the reason
               below.
             </>
           }

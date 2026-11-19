@@ -1,12 +1,23 @@
-import { Check, Copy, X, type LucideIcon } from 'lucide-react'
+import { Check, ChevronDown, Copy, X, type LucideIcon } from 'lucide-react'
 import { createContext, useCallback, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { adminGet, adminPost, AdminError } from '../lib/api'
+import { adminGet, adminPost, AdminError, type Me, type Role } from '../lib/api'
 import { cn } from '../lib/format'
 
 /** The signed-in admin: their token and a way out. */
-export const AdminContext = createContext<{ token: string; signOut: () => void }>({ token: '', signOut: () => {} })
+export const AdminContext = createContext<{ token: string; me: Me; signOut: () => void; setMe: (me: Me) => void }>({
+  token: '',
+  me: { id: null, email: '', name: '', role: 'support' },
+  signOut: () => {},
+  setMe: () => {},
+})
 export const useAdmin = () => useContext(AdminContext)
+
+/** Whether the signed-in admin's role covers an action. A super admin can do everything. */
+export function useCan() {
+  const { me } = useAdmin()
+  return (...roles: Role[]) => me.role === 'superadmin' || roles.includes(me.role)
+}
 
 /** Loads an admin endpoint; signs out if the token stops working. */
 export function useAdminData<T>(path: string) {
@@ -77,22 +88,38 @@ export function Panel({ title, action, children, flush }: { title?: string; acti
   )
 }
 
-export function Stat({ label, value, note, to, tone }: { label: string; value: ReactNode; note?: ReactNode; to?: string; tone?: 'good' | 'bad' | 'warn' }) {
+/**
+ * A row of headline figures divided by hairlines, not a pile of cards. The
+ * columns fill whatever width there is, so a wide screen gets one long strip.
+ */
+export function Kpis({ children, min = '13rem' }: { children: ReactNode; min?: string }) {
+  return (
+    <div className="grid gap-px overflow-hidden border border-line bg-surface" style={{ gridTemplateColumns: `repeat(auto-fit, minmax(min(${min}, 100%), 1fr))` }}>
+      {children}
+    </div>
+  )
+}
+
+export function Stat({ label, value, note, to, tone, icon: Icon }: { label: string; value: ReactNode; note?: ReactNode; to?: string; tone?: 'good' | 'bad' | 'warn'; icon?: LucideIcon }) {
   const body = (
     <>
-      <p className="type-label text-muted">{label}</p>
-      <p className={cn('mt-3 text-[1.75rem] font-semibold tracking-[-0.03em] tabular-nums', tone === 'good' && 'text-good', tone === 'bad' && 'text-bad', tone === 'warn' && 'text-warn')}>
+      <p className="type-label flex items-center gap-2 text-muted">
+        {Icon && <Icon size={13} aria-hidden="true" />}
+        {label}
+      </p>
+      <p className={cn('mt-2.5 truncate font-mono text-[1.5rem] font-medium tracking-[-0.03em] tabular-nums', tone === 'good' && 'text-good', tone === 'bad' && 'text-bad', tone === 'warn' && 'text-warn')}>
         {value}
       </p>
-      {note && <p className="mt-1 text-xs text-muted">{note}</p>}
+      {note && <p className="mt-1.5 text-xs text-muted">{note}</p>}
     </>
   )
+  const box = 'block px-5 py-4 shadow-[0_0_0_1px_var(--line)]'
   return to ? (
-    <Link to={to} className="block border border-line bg-surface p-5 transition-colors hover:bg-hover">
+    <Link to={to} className={cn(box, 'transition-colors hover:bg-hover')}>
       {body}
     </Link>
   ) : (
-    <div className="border border-line bg-surface p-5">{body}</div>
+    <div className={box}>{body}</div>
   )
 }
 
@@ -112,8 +139,17 @@ export function EmptyState({ icon: Icon, title, children }: { icon: LucideIcon; 
   )
 }
 
+/** The spinning loader (index.css .loader), in the brand green. */
+export function Spinner({ small }: { small?: boolean }) {
+  return <span className={cn('loader', small && 'loader-sm')} role="status" aria-label="Loading" />
+}
+
 export function Loading() {
-  return <p className="px-5 py-10 text-center text-sm text-muted">Loading</p>
+  return (
+    <div className="flex justify-center px-5 py-12">
+      <Spinner />
+    </div>
+  )
 }
 
 /** A table with a label row; rows are given as ready-made cells. */
@@ -142,26 +178,48 @@ export function Table({ columns, children, minWidth = '48rem' }: { columns: Arra
 export const cell = 'px-4 py-3 first:pl-5 last:pr-5'
 export const num = `${cell} text-right font-mono text-xs tabular-nums`
 
-/** Segmented filter, e.g. Waiting / Paid / Rejected. */
-export function Filter<T extends string>({ value, options, onChange }: { value: T; options: Array<[T, string]>; onChange: (value: T) => void }) {
+/** A filter as a dropdown, e.g. Status: Waiting / Paid / Rejected. */
+export function Filter<T extends string>({ value, options, onChange, label }: { value: T; options: Array<[T, string]>; onChange: (value: T) => void; label?: string }) {
   return (
-    <div role="group" className="flex border border-line bg-surface p-1">
-      {options.map(([option, label]) => (
-        <button
-          key={option}
-          type="button"
-          aria-pressed={value === option}
-          onClick={() => onChange(option)}
-          className={cn('px-3.5 py-1.5 text-xs font-medium transition-colors', value === option ? 'bg-text text-bg' : 'text-muted hover:text-text')}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <label className="relative flex h-9 items-center border border-line bg-surface text-xs transition-colors focus-within:border-text hover:border-muted">
+      {label && <span className="pl-3 text-muted">{label}</span>}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value as T)}
+        aria-label={label}
+        className="h-full cursor-pointer appearance-none bg-transparent pl-2 pr-8 font-medium text-text outline-none [&>option]:bg-surface"
+        style={label ? undefined : { paddingLeft: '0.75rem' }}
+      >
+        {options.map(([option, text]) => (
+          <option key={option} value={option}>
+            {text}
+          </option>
+        ))}
+      </select>
+      <ChevronDown size={14} aria-hidden="true" className="pointer-events-none absolute right-2.5 text-muted" />
+    </label>
   )
 }
 
-const GOOD = ['completed', 'verified', 'won', 'live', 'paid']
+export function Filters({ children }: { children: ReactNode }) {
+  return <div className="flex flex-wrap items-center gap-2">{children}</div>
+}
+
+/** Label: value pairs laid out as small cards, for a record's details. */
+export function Facts({ items }: { items: Array<[string, ReactNode]> }) {
+  return (
+    <dl className="grid gap-px overflow-hidden border border-line bg-surface" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(15rem, 100%), 1fr))' }}>
+      {items.map(([label, value]) => (
+        <div key={label} className="min-w-0 px-4 py-3.5 shadow-[0_0_0_1px_var(--line)]">
+          <dt className="type-label text-muted">{label}</dt>
+          <dd className="mt-1.5 break-words text-sm">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+const GOOD = ['completed', 'verified', 'won', 'live', 'paid', 'approved']
 const BAD = ['failed', 'cancelled', 'disabled', 'lost', 'rejected']
 const WAIT = ['review', 'processing', 'pending', 'open']
 

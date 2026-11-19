@@ -1,6 +1,6 @@
 import { CreditCard } from 'lucide-react'
 import { useState } from 'react'
-import { AskDialog, Button, cell, EmptyState, Filter, Loading, Notice, PageHeader, Panel, Status, Table, useAdminData, useAdminPost, UserLink } from '../components/ui'
+import { AskDialog, Button, cell, EmptyState, Filter, Loading, Notice, PageHeader, Panel, Status, Table, useAdminData, useAdminPost, useCan, UserLink } from '../components/ui'
 import { when } from '../lib/format'
 
 type Method = {
@@ -37,6 +37,7 @@ export default function Methods() {
   const [show, setShow] = useState<Show>('pending')
   const { data, error, loading, reload } = useAdminData<Method[]>(`/payment-methods?status=${show}`)
   const post = useAdminPost()
+  const can = useCan()
   const [asking, setAsking] = useState<{ m: Method; kind: 'verify' | 'block' } | null>(null)
 
   return (
@@ -46,6 +47,7 @@ export default function Methods() {
         note="M-Pesa numbers and cards verify themselves on their first payment. Bank accounts and USDT wallets are verified here, once the name matches the user's ID."
       >
         <Filter<Show>
+          label="Status"
           value={show}
           onChange={setShow}
           options={[
@@ -80,7 +82,7 @@ export default function Methods() {
                 </td>
                 <td className={`${cell} whitespace-nowrap text-muted`}>{when(m.createdAt)}</td>
                 <td className={`${cell} whitespace-nowrap text-right`}>
-                  <span className="inline-flex gap-2">
+                  {can('admin', 'support') && <span className="inline-flex gap-2">
                     {m.status !== 'verified' && (
                       <Button tone="primary" onClick={() => setAsking({ m, kind: 'verify' })}>
                         Verify
@@ -91,7 +93,7 @@ export default function Methods() {
                         Block
                       </Button>
                     )}
-                  </span>
+                  </span>}
                 </td>
               </tr>
             ))}

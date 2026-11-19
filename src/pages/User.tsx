@@ -3,8 +3,8 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { TradeTable } from '../components/TradeTable'
 import { WalletPanel } from '../components/WalletPanel'
-import { AskDialog, Button, cell, EmptyState, Loading, Notice, num, Panel, Ref, Stat, Status, Table, useAdminData, useAdminPost, VipTag } from '../components/ui'
-import { local, signedUsd, usd, when } from '../lib/format'
+import { AskDialog, Button, cell, EmptyState, Facts, Kpis, Loading, Notice, num, Panel, Ref, Stat, Status, Table, useAdminData, useAdminPost, useCan, VipTag } from '../components/ui'
+import { day, useKsh, useTxKsh, usd, when } from '../lib/format'
 import { METHOD, type Trade, type Tx } from '../lib/types'
 
 type Detail = {
@@ -26,6 +26,12 @@ type Detail = {
   realPl: number
   transactions: Tx[]
   trades: Trade[]
+  verification?: {
+    ready: boolean
+    verified: boolean
+    identity: { docName: string; status: string; reason: string | null; createdAt: string } | null
+    address: { docName: string; status: string; reason: string | null; createdAt: string } | null
+  }
   methods: Array<{ id: string; kind: string; label: string; masked: string; status: string; isDefault: boolean; createdAt: string; removed: boolean }>
 }
 
@@ -33,6 +39,9 @@ export default function User() {
   const { id = '' } = useParams()
   const { data, error, loading, reload } = useAdminData<Detail>(`/users/${encodeURIComponent(id)}`)
   const post = useAdminPost()
+  const can = useCan()
+  const { ksh, signed } = useKsh()
+  const txKsh = useTxKsh()
   const [asking, setAsking] = useState<'grant' | 'remove' | 'credit' | 'debit' | null>(null)
   const path = `/users/${encodeURIComponent(id)}`
   const done = () => {
@@ -50,42 +59,71 @@ export default function User() {
       {loading && !data && <Loading />}
       {data && (
         <>
-          <div>
-            <h1 className="flex items-center text-2xl font-semibold tracking-[-0.02em]">
-              {data.name || data.email}
-              {data.vip && <VipTag />}
-            </h1>
-            <dl className="mt-3 grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                ['Email', data.email],
-                ['Phone', data.phone || '-'],
-                ['Country', data.country || '-'],
-                ['Joined', when(data.createdAt)],
-                ['Referral code', data.referralCode],
-                ['Referred by', data.referredBy || '-'],
-              ].map(([label, value]) => (
-                <div key={label} className="flex gap-3">
-                  <dt className="w-28 shrink-0 text-muted">{label}</dt>
-                  <dd className="min-w-0 break-all">{value}</dd>
-                </div>
-              ))}
-            </dl>
-            <p className="mt-2 flex items-center text-xs text-muted">
-              User ID <Ref value={data.id} />
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="flex items-center text-2xl font-semibold tracking-[-0.02em]">
+                {data.name || data.email}
+                {data.vip && <VipTag />}
+              </h1>
+              <p className="mt-1 text-sm text-muted">Joined {when(data.createdAt)}</p>
+            </div>
+            {data.verification && !data.vip && (
+              <span
+                className={`border px-2.5 py-1 font-mono text-xs ${data.verification.verified ? 'border-good/60 text-good' : 'border-warn/60 text-warn'}`}
+              >
+                {data.verification.verified
+                  ? 'Identity verified'
+                  : data.verification.identity?.status === 'pending'
+                    ? 'ID waiting for review'
+                    : 'Not verified: cannot withdraw'}
+              </span>
+            )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Stat label="Real balance" value={usd(data.balances.real)} note={`Demo ${usd(data.balances.demo)}`} />
-            <Stat label="Deposited" value={usd(data.deposited)} />
-            <Stat label="Withdrawn" value={usd(data.withdrawn)} />
-            <Stat label="Real trading P/L" value={signedUsd(data.realPl)} tone={data.realPl > 0 ? 'bad' : data.realPl < 0 ? 'good' : undefined} note="The user's, so a gain is the house's loss" />
-          </div>
+          <Facts
+            items={[
+              ['Email', data.email],
+              ['Phone', data.phone || '-'],
+              ['Country', data.country || '-'],
+              ['Joined', when(data.createdAt)],
+              ['Referral code', <Ref key="r" value={data.referralCode} />],
+              ['Referred by', data.referredBy || '-'],
+              [
+                'Identity',
+                data.verification?.identity ? (
+                  <span key="i">
+                    {data.verification.identity.docName} · <Status value={data.verification.identity.status === 'pending' ? 'review' : data.verification.identity.status} />
+                    <span className="block text-xs text-muted">sent {day(data.verification.identity.createdAt)}</span>
+                  </span>
+                ) : (
+                  <span key="i" className="text-muted">Nothing sent</span>
+                ),
+              ],
+              [
+                'Address',
+                data.verification?.address ? (
+                  <span key="a">
+                    {data.verification.address.docName} · <Status value={data.verification.address.status === 'pending' ? 'review' : data.verification.address.status} />
+                  </span>
+                ) : (
+                  <span key="a" className="text-muted">Nothing sent</span>
+                ),
+              ],
+              ['User ID', <Ref key="id" value={data.id} />],
+            ]}
+          />
+
+          <Kpis>
+            <Stat label="Real balance" value={ksh(data.balances.real)} note={`${usd(data.balances.real)} · demo ${usd(data.balances.demo)}`} />
+            <Stat label="Deposited" value={ksh(data.deposited)} />
+            <Stat label="Withdrawn" value={ksh(data.withdrawn)} />
+            <Stat label="Real trading P/L" value={signed(data.realPl)} tone={data.realPl > 0 ? 'bad' : data.realPl < 0 ? 'good' : undefined} note="The user's, so a gain is the house's loss" />
+          </Kpis>
 
           <Panel
             title="VIP account"
             action={
-              data.vip ? (
+              !can('admin') ? undefined : data.vip ? (
                 <span className="flex gap-2">
                   <Button tone="primary" onClick={() => setAsking('credit')}>
                     Credit
@@ -134,8 +172,8 @@ export default function User() {
                     </td>
                     <td className={cell}>{tx.type}</td>
                     <td className={cell}>{METHOD[tx.method] ?? tx.method}</td>
-                    <td className={num}>{local(tx.local, tx.localCurrency) ?? usd(tx.amount)}</td>
-                    <td className={num}>{usd(tx.net)}</td>
+                    <td className={num}>{txKsh(tx)}</td>
+                    <td className={num}>{ksh(tx.net)}</td>
                     <td className={`${cell} max-w-64 text-xs`}>
                       {tx.failure ? <span className="text-bad">{tx.failure}</span> : <span className="font-mono">{tx.receipt ?? tx.destination ?? '-'}</span>}
                     </td>
